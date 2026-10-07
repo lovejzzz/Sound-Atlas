@@ -4,7 +4,7 @@ MUSC 1100 (Fall 2026) midterm review site.
 
 - **地图**：hover the water-drop pins to lift each region; click for illustrated, one-topic-per-page notes.
 - **听力**：the ten course recordings with 15/30/60-second or full-length clips, shuffle, random start points, a blind-listening quiz, per-track guides, notes saved in the browser, and an instrument gallery with photos and solo samples.
-- **模拟考题**：52 English multiple-choice questions with Chinese hints and illustrated explanations.
+- **模拟考题**：52 English multiple-choice questions with illustrated explanations. Each round draws six distinct real-audio listening questions from ten course recordings; other topics retain Chinese hints.
 
 Open `index.html` through any static host (GitHub Pages serves it from the repository root). Everything runs in the browser; no build step.
 
@@ -12,6 +12,12 @@ Open `index.html` through any static host (GitHub Pages serves it from the repos
 
 - Click **盲听测验** to start a blind-listening round immediately with the selected tracks, shuffled order, and random clip starts. The button becomes **结束测验** to stop the round and return to normal listening. Your previous shuffle and random-start settings are restored when the round ends.
 - Use the bottom **播放 / 暂停** button for normal continuous listening, starting with the current track when it is selected. Clicking a track starts from that track; an unchecked track plays on its own. Clip length, shuffle, and repeat still apply.
+
+## Mock exam listening
+
+- Each new full round starts with six randomly selected, non-repeating recordings, followed by the 42 theory questions. The **听辨** category runs the six listening questions on their own.
+- Each recording has one four-choice question. Click **播放片段** to hear its opening 30 seconds; pause or use **从头重听** as needed. Recording names and text hints are hidden until you answer. The 30-second length and replay are practice settings, not a claim about the instructor's exact exam timing.
+- Answer to see the correct choice and explanation, then advance to the next recording. **重新抽题** / **再做一遍** draws a fresh set; wrong-answer review reuses the missed questions. Changing questions, rounds, or views stops the current recording.
 
 ## Educational use only · 仅供教育用途
 

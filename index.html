@@ -353,6 +353,13 @@ mark.t{background:var(--hl);color:inherit;border-radius:3px;padding:0 2px}
 .prog{height:4px;border-radius:4px;background:var(--rule);overflow:hidden}
 .prog i{display:block;height:100%;background:var(--drop);transition:width .4s}
 .qcard{display:grid;gap:16px}
+.q-listening-note{margin:0;font-size:13px;line-height:1.7;color:var(--ink-3)}
+.q-audio{display:grid;gap:12px;padding:18px;border:1px solid var(--rule);border-radius:16px;background:var(--paper-2)}
+.q-audio-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.q-audio-controls .nav{min-width:112px;justify-content:center}
+.q-audio-time{font-family:var(--f-mono);font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.q-audio progress{width:100%;height:6px;accent-color:var(--drop)}
+.q-audio-status{font-size:13px;color:var(--ink-3);min-height:1.5em;line-height:1.5}
 .qmeta{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--drop)}
 .qhead{display:flex;align-items:center;gap:10px}
 .hintwrap{position:relative;display:inline-flex}
@@ -477,6 +484,7 @@ mark.t{background:var(--hl);color:inherit;border-radius:3px;padding:0 2px}
     <audio id="lsAudio" preload="metadata"></audio><audio id="lsSample" preload="none"></audio>
   </section>
   <section class="quiz" id="quiz" hidden aria-label="模拟考题"></section>
+  <audio id="qAudio" preload="none"></audio>
   <nav class="chips" id="chips" aria-label="地点"></nav>
 </div>
 
@@ -1144,16 +1152,16 @@ let lsInit=false;
 function lsBoot(){ if(lsInit) return; lsInit=true; lsLoad(0,false); lsState(); }
 
 const QB = [
- ['listen','A clip features a single-string musical bow with a metallic "twang," a tambourine, and a solo song that turns into call-and-response. Which genre is it?',['Samba','Capoeira','Haitian Vodou','Cuban son'],1,'单弦音乐弓就是 <b>berimbau</b>，它是 capoeira 的领头乐器。开头独唱（ladainha）再转入应答（corrido），也是 capoeira 的结构。Samba 的标志是密集鼓队和 cuíca，不是音乐弓。',['brazil',3]],
- ['listen','You hear bright, metallic melodies played on tuned drums, supported by an "engine room" of brake drums and percussion. Where does this tradition come from?',['Cuba','Haiti','Trinidad and Tobago','Brazil'],2,'用油桶做的有音高的金属鼓是 <b>steel pan</b>，来自千里达及托巴哥。engine room 是钢鼓乐团下面打底的节奏组。',['trinidad',0]],
- ['listen','Violins and trumpets share the melody, the singer breaks into falsetto, and the meter shifts between 3/4 and 6/8. What genre is this?',['Cuban son','Mariachi','Merengue','Salsa'],1,'小提琴加小号、假声和 3/4 与 6/8 交替，三个线索都指向 <b>mariachi</b>。其他三种都是二拍子，也没有小提琴群。',['mexico',1]],
- ['listen','A fast dance in 2/4 features an accordion, a metal scraper played with a brush, and a two-headed drum. What is it?',['Dominican merengue','Brazilian samba','Peruvian sikuri','New York salsa'],0,'手风琴、金属刮响器 <b>güira</b>、双面鼓 <b>tambora</b>，这是多米尼加 merengue 的标准编制。',['dominican',0]],
- ['listen','A small group with claves, a tres guitar, bongó, and maracas plays a song; in the second half a chorus repeats a line while a lead singer improvises. What is this?',['Salsa','Cuban son','Mariachi','Capoeira'],1,'小编制、有 tres、后半段进入 montuno 应答，是<b>古巴 son</b>。salsa 也有 montuno，但会有很大的铜管组和钢琴。',['cuba',2]],
- ['listen','The clip keeps the clave rhythm and montuno of Cuban son, but adds a loud section of trumpets and trombones, a repeating piano pattern, and timbales. What is it?',['Cuban son','Merengue','New York salsa','Samba'],2,'保留 clave 和 montuno，再加铜管组、钢琴 montuno 和 timbales，就是<b>纽约 salsa</b>。这是 son 与 salsa 最关键的区别：编制大小。',['nyc',0]],
- ['listen','Many panpipe players create a thick, breathy sound, accompanied by a large bass drum. There is no singing. Where is this from?',['The Peruvian Andes','The Amazon','Trinidad','Haiti'],0,'一大群排箫加 bombo 大鼓，是秘鲁安第斯的 <b>sikuri</b>。排箫是考纲点名的必认乐器。',['peru',0]],
- ['listen','Voices sing one short phrase with a narrow range over and over, accompanied only by a rattle. There is no harmony. Which example is this?',['Haitian Vodou','Amazonian chant','Samba','Mariachi'],1,'几乎只有人声、短句反复、没有和声、音域窄，是<b>亚马逊原住民吟唱</b>。Vodou 会有多面鼓和铁铃。',['brazil',0]],
- ['listen','Three drums of different sizes and an iron bell accompany a song leader who is answered by a group singing in Haitian Creole. What is this?',['Capoeira','Haitian Vodou','Cuban son','Steel band'],1,'三面鼓（manman、segon、boula）、ogan 铁铃、克里奥尔语、应答，是<b>海地 Vodou</b> 仪式音乐。',['haiti',0]],
- ['listen','A dense percussion ensemble has a deep bass drum accenting the second beat and a friction drum that sounds like a laughing voice. What is it?',['Merengue','Samba','Vodou','Sikuri'],1,'surdo 低音鼓重音在第二拍，加上像笑声的 <b>cuíca</b>，是巴西 <b>samba</b> 的鼓队。',['brazil',1]],
+ ['listen','Listen to the recording. Which musical genre or tradition is this?',['Samba','Capoeira','Haitian Vodou','Cuban son'],1,'单弦音乐弓就是 <b>berimbau</b>，它是 capoeira 的领头乐器。开头独唱（ladainha）再转入应答（corrido），也是 capoeira 的结构。Samba 的标志是密集鼓队和 cuíca，不是音乐弓。',['brazil',3],'musc1100-10'],
+ ['listen','Listen to the recording. Where does this musical tradition come from?',['Cuba','Haiti','Trinidad and Tobago','Brazil'],2,'用油桶做的有音高的金属鼓是 <b>steel pan</b>，来自千里达及托巴哥。engine room 是钢鼓乐团下面打底的节奏组。',['trinidad',0],'musc1100-06'],
+ ['listen','Listen to the recording. Which musical genre or tradition is this?',['Cuban son','Mariachi','Merengue','Salsa'],1,'小提琴加小号、假声和 3/4 与 6/8 交替，三个线索都指向 <b>mariachi</b>。其他三种都是二拍子，也没有小提琴群。',['mexico',1],'musc1100-01'],
+ ['listen','Listen to the recording. Which musical genre or tradition is this?',['Dominican merengue','Brazilian samba','Peruvian sikuri','New York salsa'],0,'手风琴、金属刮响器 <b>güira</b>、双面鼓 <b>tambora</b>，这是多米尼加 merengue 的标准编制。',['dominican',0],'musc1100-03'],
+ ['listen','Listen to the recording. Which musical genre or tradition is this?',['Salsa','Cuban son','Mariachi','Capoeira'],1,'小编制、有 tres、后半段进入 montuno 应答，是<b>古巴 son</b>。salsa 也有 montuno，但会有很大的铜管组和钢琴。',['cuba',2],'musc1100-04'],
+ ['listen','Listen to the recording. Which musical genre or tradition is this?',['Cuban son','Merengue','New York salsa','Samba'],2,'保留 clave 和 montuno，再加铜管组、钢琴 montuno 和 timbales，就是<b>纽约 salsa</b>。这是 son 与 salsa 最关键的区别：编制大小。',['nyc',0],'musc1100-05'],
+ ['listen','Listen to the recording. Where does this musical tradition come from?',['The Peruvian Andes','The Amazon','Trinidad','Haiti'],0,'一大群排箫加 bombo 大鼓，是秘鲁安第斯的 <b>sikuri</b>。排箫是考纲点名的必认乐器。',['peru',0],'musc1100-07'],
+ ['listen','Listen to the recording. Which musical genre or tradition is this?',['Haitian Vodou','Amazonian chant','Samba','Mariachi'],1,'几乎只有人声、短句反复、没有和声、音域窄，是<b>亚马逊原住民吟唱</b>。Vodou 会有多面鼓和铁铃。',['brazil',0],'musc1100-08'],
+ ['listen','Listen to the recording. Which musical genre or tradition is this?',['Capoeira','Haitian Vodou','Cuban son','Steel band'],1,'三面鼓（manman、segon、boula）、ogan 铁铃、克里奥尔语、应答，是<b>海地 Vodou</b> 仪式音乐。',['haiti',0],'musc1100-02'],
+ ['listen','Listen to the recording. Which musical genre or tradition is this?',['Merengue','Samba','Vodou','Sikuri'],1,'surdo 低音鼓重音在第二拍，加上像笑声的 <b>cuíca</b>，是巴西 <b>samba</b> 的鼓队。',['brazil',1],'musc1100-09'],
  ['inst','Which instrument is a friction drum, played by rubbing a stick attached inside the drumhead?',['Güira','Cuíca','Berimbau','Claves'],1,'<b>Cuíca</b> 的鼓皮中央固定一根小棍，用湿布摩擦小棍发声，所以是摩擦鼓。güira 是刮响器，berimbau 是音乐弓，claves 是两根木棒。',['brazil',1]],
  ['inst','In Cuban son, which instrument acts as the timekeeper by playing a repeating two-bar pattern?',['Bongó','Tres','Claves','Maracas'],2,'<b>Claves</b> 打出 clave 节奏型，所有乐器都要跟它对齐，所以它是 timekeeper。',['cuba',1]],
  ['inst','The güira is best described as:',['Two hardwood sticks struck together','A metal scraper played with a brush','A bamboo trumpet that plays one pitch','A single-string musical bow'],1,'<b>Güira</b> 是金属刮响器，用刷子刮，"嚓嚓"推动 merengue 的速度感。其他三个分别是 claves、vaksin、berimbau。',['dominican',0]],
@@ -1200,9 +1208,69 @@ const QB = [
 const HINTS = ["题目描述的是一件只有一根弦的弓形乐器，敲起来有金属的“嗡—叮”声。想想这件乐器属于哪个曲种，它在那里负责带领节奏。", "关键词是“油桶做的有音高的鼓”和 engine room（打底的节奏组）。想想哪个国家的狂欢节传统里有这种乐器。", "注意三个线索：小提琴加小号、男声翻到假声、节拍在三拍和六拍之间切换。只有一个曲种同时有这三样。", "accordion 是手风琴，metal scraper 是金属刮响器，two-headed drum 是双面鼓。想想哪个曲种用这三件乐器，而且是很快的二拍子。", "claves、tres、bongó 都是小编制的乐器。后半段“合唱反复、领唱即兴”是 montuno。注意编制的大小。", "这首保留了 son 的 clave 和 montuno，但多了大铜管组、钢琴和 timbales。想想 son 传到哪个城市以后变成了什么。", "panpipes 是排箫，breathy 是带呼气声。想想哪个地区以排箫合奏出名。", "题目说的是只有人声、短句反复、音域窄、没有和声。想想 10 首里哪一首几乎没有乐器，也没有欧洲或非洲的影响。", "三面大小不同的鼓、一个铁铃、领唱与众人应答，语言是海地克里奥尔语。想想这是哪种仪式音乐。", "friction drum 是摩擦鼓，发出像笑声的“呜哇”声。重音落在第二拍的低音大鼓是另一个线索。", "friction drum 意思是摩擦鼓：声音是靠摩擦鼓皮里面的一根小棍发出来的，不是敲。四个选项里只有一件是鼓。", "timekeeper 是守拍子的乐器，two-bar pattern 是两小节的固定节奏型。想想这个节奏型叫什么名字，是哪件乐器打的。", "四个选项分别描述了四件不同的乐器。güira 出现在 merengue 里，回想它发出的声音。", "题目问 berimbau 在 capoeira 里的音乐角色。berimbau 只有一根弦，能不能弹和弦？它和比赛的进行有什么关系？", "ira 和 arka 是排箫的两半，两人各拿一半。想想只拿一半的音，要怎样才能吹出完整的旋律。", "vaksin 是海地的乐器。题目给了四种描述，注意材料（竹子）和“每支只吹一个音”这个特点。", "falsetto 是假声：男声突然唱到很高、很轻的音区。先排除选项里的打击乐器。", "题目描述的是“一个短句不停地重复”。回想必考的听觉术语里，哪一个是这个意思。", "monophonic 是单声部：只有一条旋律线，没有和声，也没有层层叠加的乐器。想想哪个例子最“薄”。", "3/4 是三拍子，6/8 是两组三个八分音符。题目问哪个曲种在这两种分组之间来回切换，其他大多数例子都是二拍子。", "pitch bending 是音与音之间滑过去。claves 和 güira 根本没有固定音高，可以先排除。", "题目问一个字拖好几个音叫什么。注意不要和 hocket（几个人接力完成一条旋律）搞混。", "题目问的是从 son 延续到 salsa、没有变的东西。想想两者共同的节奏骨架和结构。", "题目问 salsa 相比 son 的变化。想想 salsa 的乐队编制和纽约的爵士环境。", "Fania Records 名字里的 Records 是“唱片”的意思。想想它是政治组织，还是商业机构。", "Young Lords 和 Fania 是常被混淆的一对。一个是政治组织，一个是唱片公司，题目问的是 Young Lords。", "Nuyorican 是由两个词拼起来的：New York 加上一个加勒比岛屿的名字。", "题目问 salsa 歌词常写什么。想想纽约拉丁裔社区当时的生活和社会气氛，并排除属于其他专题的选项。", "题目问哪个是非洲来源的特征。回想课上说过：和声、分段歌词、小提琴多半来自欧洲。", "题目问 mariachi 里欧洲来源的特征。想想 mariachi 用了哪些乐器，以及它的和声。", "poly- 是“多”的意思，rhythm 是节奏。顾名思义。", "考纲特别提醒过：不要把每种音乐都说成同一种混合。找和这句提醒一致的选项。", "题目问 son 里西班牙和非洲的元素分别是什么。回想哪些是弦乐和诗体，哪些是节奏和打击乐。", "题目问钢鼓为什么用油桶。回想钢鼓材料的演变顺序：鼓 → 竹筒 → 废弃金属。二战时油桶从哪里来？", "题目问钢鼓在什么时候的庆祝中公开亮相。回想二战期间狂欢节的情况，以及战争哪一年结束。", "题目问 capoeira 和奴隶制、镇压的关系。想想它最早是谁发展出来的，以及它被定为犯罪的年份。", "roda 和 ginga 是 capoeira 的两个关键词：一个指空间，一个指动作。题目问的是 roda。", "roda 和 ginga 是 capoeira 的两个关键词：一个指空间，一个指动作。题目问的是 ginga。", "题目要找两者之间“有意义的联系”。先检查每个选项的事实对不对，再看哪个同时适用于两种传统。", "Trujillo 推广 merengue 的同时，对多米尼加身份有一套种族和国家的说法。想想他对海地和非洲性的态度。", "1937 年发生在多米尼加和海地边境的屠杀。想想当时谁统治多米尼加。", "Estado Novo 是 Vargas 在巴西建立的政权。想想政府用了哪些渠道推广 samba，以及 samba 学校在其中的角色。", "escolas de samba 直译是“samba 学校”，但它不是正规的音乐学院。想想它们在狂欢节里做什么。", "比较题要找同时说清楚两边的选项：一个共同点，加上两人对非洲性的不同态度。", "syncretism 是“融合”的意思。想想海地 Vodou 和哪个宗教融合，具体是怎么对应的。", "Legba 是守门人，掌管十字路口和通道。想想哪位天主教圣徒手里拿着天国的钥匙。", "题目问仪式里为什么要用特定的歌和鼓点。想想每个 lwa 和它自己的歌、节奏之间是什么关系。", "题目问的是“从信徒的角度”怎么理解附身。注意 Vodou 里形容附身的那个比喻：信徒被称为“马”。", "这是考纲特别强调的一点：鼓声本身有没有让人附身的力量？附身还需要什么条件？", "满分理由要有具体细节，并说明细节怎样支持答案。逐一检查：哪些只是在重复答案，哪些太笼统，哪些事实错误。", "比较题的理由必须两边都写到，各给一个具体细节，再说出共同点。看哪个选项做到了全部。", "题目要找最能支持“capoeira 是一种反抗”的细节。有些选项事实正确，但和反抗、压制没有关系。"];
 const QZ = {el:document.getElementById('quiz'), order:[], i:0, topic:'all', answers:{}, wrongOnly:false};
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const QUIZ_LISTEN_COUNT=6, QUIZ_CLIP_SECONDS=30;
+const qa=$('qAudio');
+const QAudio={key:null,version:0,loading:false,ready:false,message:'',end:QUIZ_CLIP_SECONDS,cancelLoad:null};
+function qStopAudio(){
+  ++QAudio.version; if(QAudio.cancelLoad) QAudio.cancelLoad();
+  QAudio.loading=false; QAudio.message=''; qa.pause(); qAudioUI();
+}
+function qSyncAudio(qi){
+  const key=qi!==undefined && QB[qi][6] ? `${QZ.round}:${qi}` : null;
+  if(key!==QAudio.key){
+    qStopAudio(); QAudio.key=key; QAudio.ready=false; QAudio.end=QUIZ_CLIP_SECONDS;
+    qa.removeAttribute('src'); qa.load();
+  }
+  qAudioUI();
+}
+function qAudioUI(){
+  const play=$('qPlay'), replay=$('qReplay'); if(!play) return;
+  play.textContent=QAudio.loading?'正在加载…':!qa.paused?'暂停':QAudio.ready&&qa.currentTime>=QAudio.end-.05?'重听片段':'播放片段';
+  play.disabled=QAudio.loading; replay.disabled=QAudio.loading;
+  $('qAudioTime').textContent=`${fmt(QAudio.ready?qa.currentTime:0)} / ${fmt(QAudio.end)}`;
+  $('qAudioProgress').max=QAudio.end; $('qAudioProgress').value=QAudio.ready?Math.min(qa.currentTime,QAudio.end):0;
+  $('qAudioStatus').textContent=QAudio.message || '听完后选择答案；可以重听同一片段。';
+}
+async function qPlayAudio(restart=false){
+  const qi=QZ.order[QZ.i], q=QB[qi]; if(!q || !q[6] || QZ.el.hidden) return;
+  if(!restart && !qa.paused){ qa.pause(); return; }
+  lsCancelPending(); la.pause(); sa.pause();
+  const version=++QAudio.version;
+  if(!QAudio.ready){
+    QAudio.loading=true; QAudio.message='正在加载录音…'; qAudioUI();
+    try{
+      const url=await audioURL(LIB.tracks.find(t=>t.id===q[6]));
+      if(version!==QAudio.version) return;
+      await new Promise((resolve,reject)=>{
+        const cleanup=()=>{qa.removeEventListener('loadedmetadata',loaded);qa.removeEventListener('error',failed);QAudio.cancelLoad=null;};
+        const loaded=()=>{cleanup();resolve();}, failed=()=>{cleanup();reject(new Error('decode'));};
+        QAudio.cancelLoad=()=>{cleanup();resolve();};
+        qa.addEventListener('loadedmetadata',loaded);qa.addEventListener('error',failed);qa.src=url;qa.load();
+      });
+      if(version!==QAudio.version) return;
+      QAudio.ready=true; QAudio.end=Math.min(QUIZ_CLIP_SECONDS,qa.duration);
+    }catch(e){
+      if(version!==QAudio.version) return;
+      if(e.message==='decode'){ URL.revokeObjectURL(blobs[q[6]]); delete blobs[q[6]]; qa.removeAttribute('src'); qa.load(); }
+      QAudio.loading=false; QAudio.message='录音加载失败，请点击播放片段重试。'; qAudioUI(); return;
+    }
+  }
+  if(version!==QAudio.version) return;
+  QAudio.loading=false; QAudio.message='';
+  if(restart || qa.currentTime>=QAudio.end-.05) qa.currentTime=0;
+  try{await qa.play();}catch(e){if(version===QAudio.version) QAudio.message='请点击播放片段开始试听。';}
+  qAudioUI();
+}
+qa.addEventListener('play',qAudioUI); qa.addEventListener('pause',qAudioUI);
+qa.addEventListener('timeupdate',()=>{if(QAudio.ready && qa.currentTime>=QAudio.end-.05 && !qa.paused){qa.pause();qa.currentTime=QAudio.end;}qAudioUI();});
+qa.addEventListener('ended',qAudioUI);
 function buildOrder(){
   let ids = QB.map((_,i)=>i).filter(i=>QZ.topic==='all'||QB[i][0]===QZ.topic);
-  if(QZ.wrongOnly) ids = ids.filter(i=>QZ.answers[i] && !QZ.answers[i].ok);
+  if(QZ.wrongOnly) ids = shuffle(ids.filter(i=>QZ.answers[i] && !QZ.answers[i].ok));
+  else {
+    const listening=shuffle(ids.filter(i=>QB[i][0]==='listen')).slice(0,QUIZ_LISTEN_COUNT);
+    ids=listening.concat(shuffle(ids.filter(i=>QB[i][0]!=='listen')));
+  }
   QZ.order = ids; QZ.i = 0; QZ.optOrder = {};
   ids.forEach(i=>QZ.optOrder[i]=shuffle([0,1,2,3]));
 }
@@ -1211,8 +1279,9 @@ function quizRender(){
   const counts = Object.fromEntries(Object.keys(TOPICS).map(t=>[t,QB.filter(q=>q[0]===t).length]));
   let html = `<div class="qwrap">
     <div class="qbar"><div class="qstat"><span><b>${right}</b>答对</span><span><b>${done.length-right}</b>答错</span><span><b>${QB.length}</b>题库</span></div>
-    <div class="qtools"><button class="btn" id="qShuf" type="button">打乱顺序</button><button class="btn" id="qWrong" type="button" ${done.some(a=>!a.ok)?'':'disabled'}>${QZ.wrongOnly?'练全部题':'只练错题'}</button><button class="btn" id="qReset" type="button">清空记录</button></div></div>
-    <div class="qtopics">${[['all','全部',QB.length],...Object.entries(TOPICS).map(([k,v])=>[k,v,counts[k]])].map(([k,v,c])=>`<button type="button" data-t="${k}" class="${QZ.topic===k?'on':''}">${v}<span>${c}</span></button>`).join('')}</div>
+    <div class="qtools"><button class="btn" id="qShuf" type="button">${!QZ.wrongOnly&&(QZ.topic==='all'||QZ.topic==='listen')?'重新抽题':'打乱顺序'}</button><button class="btn" id="qWrong" type="button" ${done.some(a=>!a.ok)?'':'disabled'}>${QZ.wrongOnly?'练全部题':'只练错题'}</button><button class="btn" id="qReset" type="button">清空记录</button></div></div>
+    <div class="qtopics">${[['all','全部',QB.length],...Object.entries(TOPICS).map(([k,v])=>[k,v,k==='listen'?`${QUIZ_LISTEN_COUNT} / ${counts[k]}`:counts[k]])].map(([k,v,c])=>`<button type="button" data-t="${k}" class="${QZ.topic===k?'on':''}">${v}<span>${c}</span></button>`).join('')}</div>
+    ${QZ.topic==='all'||QZ.topic==='listen'?`<p class="q-listening-note">${QZ.wrongOnly?'听力错题复习：重听录音后逐题作答。':`听力部分：从 ${counts.listen} 首录音中随机抽取 ${QUIZ_LISTEN_COUNT} 首，每首一道选择题；片段 ${QUIZ_CLIP_SECONDS} 秒，可重听。`}</p>`:''}
     <div class="prog"><i style="width:${n?((QZ.i)/n*100):0}%"></i></div>`;
   if(!n){ html += `<div class="qend"><div class="big">✓</div><p>这个范围里没有错题了。</p></div>`; }
   else if(QZ.i>=n){
@@ -1222,7 +1291,9 @@ function quizRender(){
   } else {
     const qi = QZ.order[QZ.i], q = QB[qi], ans = QZ.answers[qi], oo = QZ.optOrder[qi];
     const answeredNow = ans && ans.round===QZ.round;
-    html += `<div class="qcard"><div class="qhead"><div class="qmeta">Question ${QZ.i+1} of ${n} · ${TOPICS[q[0]]}</div><span class="hintwrap"><button class="hintbtn" type="button" aria-label="提示" aria-describedby="hintTip" aria-expanded="false">?</button><span class="hinttip" role="tooltip" id="hintTip"><b>提示</b>${HINTS[qi]}</span></span></div><p class="qtext">${q[1]}</p>
+    const listening=q[0]==='listen', listenIds=QZ.order.filter(i=>QB[i][0]==='listen');
+    html += `<div class="qcard"><div class="qhead"><div class="qmeta">Question ${QZ.i+1} of ${n} · ${listening?`听力 ${listenIds.indexOf(qi)+1} / ${listenIds.length}`:TOPICS[q[0]]}</div>${listening?'':`<span class="hintwrap"><button class="hintbtn" type="button" aria-label="提示" aria-describedby="hintTip" aria-expanded="false">?</button><span class="hinttip" role="tooltip" id="hintTip"><b>提示</b>${HINTS[qi]}</span></span>`}</div><p class="qtext">${q[1]}</p>
+      ${listening?`<div class="q-audio" aria-label="听力录音"><div class="q-audio-controls"><button class="nav primary" id="qPlay" type="button">播放片段</button><button class="btn" id="qReplay" type="button">从头重听</button><span class="q-audio-time" id="qAudioTime">0:00 / 0:30</span></div><progress id="qAudioProgress" max="30" value="0" aria-label="片段播放进度"></progress><div class="q-audio-status" id="qAudioStatus" role="status"></div></div>`:''}
       <div class="opts">${oo.map((oi,pos)=>{let cls='',mk='';if(answeredNow){if(oi===q[3]){cls='right';mk='正确答案';}else if(oi===ans.pick){cls='wrong';mk='你的选择';}else cls='dim';}
         return `<button class="opt ${cls}" type="button" data-o="${oi}" ${answeredNow?'disabled':''}><span class="lt">${'ABCD'[pos]}</span><span>${q[2][oi]}</span><span class="mk">${mk}</span></button>`}).join('')}</div>`;
     if(answeredNow){
@@ -1237,14 +1308,17 @@ function quizRender(){
   }
   html += `</div>`;
   QZ.el.innerHTML = html;
+  qSyncAudio(QZ.order[QZ.i]);
   QZ.el.querySelectorAll('.qtopics button').forEach(b=>b.onclick=()=>{QZ.topic=b.dataset.t;QZ.wrongOnly=false;newRound();});
-  QZ.el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const qi=QZ.order[QZ.i];const pick=+b.dataset.o;QZ.answers[qi]={pick,ok:pick===QB[qi][3],round:QZ.round};QZ.showFig=false;quizRender();const fb=QZ.el.querySelector('.fb');if(fb)fb.scrollIntoView({behavior:'smooth',block:'nearest'});});
+  QZ.el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{qStopAudio();const qi=QZ.order[QZ.i];const pick=+b.dataset.o;QZ.answers[qi]={pick,ok:pick===QB[qi][3],round:QZ.round};QZ.showFig=false;quizRender();const fb=QZ.el.querySelector('.fb');if(fb)fb.scrollIntoView({behavior:'smooth',block:'nearest'});});
   const on=(id,f)=>{const e=document.getElementById(id);if(e)e.onclick=f;};
   const hb=QZ.el.querySelector('.hintbtn'); if(hb) hb.onclick=e=>{e.stopPropagation();const w=hb.parentElement;const o=w.classList.toggle('open');hb.setAttribute('aria-expanded',o);};
+  on('qPlay',()=>qPlayAudio());
+  on('qReplay',()=>qPlayAudio(true));
   on('qNext',()=>{QZ.i++;quizRender();QZ.el.scrollTop=0;});
   on('qFig',()=>{QZ.showFig=true;quizRender();});
-  on('qGo',()=>{const r=QB[QZ.order[QZ.i]][5];open(r[0],r[1]);});
-  on('qShuf',()=>{shuffle(QZ.order);QZ.i=0;QZ.round++;quizRender();});
+  on('qGo',()=>{qStopAudio();const r=QB[QZ.order[QZ.i]][5];open(r[0],r[1]);});
+  on('qShuf',()=>newRound());
   on('qWrong',()=>{QZ.wrongOnly=!QZ.wrongOnly;newRound();});
   on('qReset',()=>{QZ.answers={};QZ.wrongOnly=false;newRound();});
   on('qAgain',()=>{QZ.wrongOnly=false;newRound();});
@@ -1260,7 +1334,8 @@ function setView(v){
   appEl.classList.toggle('quizmode',q||l); QZ.el.hidden=!q; $('listen').hidden=!l;
   tabMap.setAttribute('aria-selected',v==='map'); tabQuiz.setAttribute('aria-selected',q); tabListen.setAttribute('aria-selected',l);
   if(q && !QZ.order.length) newRound();
-  if(l) lsBoot(); else { la.pause(); sa.pause(); }
+  if(!q) qStopAudio();
+  if(l) lsBoot(); else { lsCancelPending(); la.pause(); sa.pause(); }
   if(v==='map') requestAnimationFrame(layout);
 }
 tabMap.onclick=()=>setView('map'); tabQuiz.onclick=()=>setView('quiz'); tabListen.onclick=()=>setView('listen');
