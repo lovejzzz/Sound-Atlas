@@ -8,6 +8,11 @@ MUSC 1100 (Fall 2026) midterm review site.
 
 Open `index.html` through any static host (GitHub Pages serves it from the repository root). Everything runs in the browser; no build step.
 
+## Listening controls
+
+- Click **盲听测验** to start a blind-listening round immediately with the selected tracks, shuffled order, and random clip starts. The button becomes **结束测验** to stop the round and return to normal listening. Your previous shuffle and random-start settings are restored when the round ends.
+- Use the bottom **播放 / 暂停** button for normal continuous listening, starting with the current track when it is selected. Clicking a track starts from that track; an unchecked track plays on its own. Clip length, shuffle, and repeat still apply.
+
 ## Educational use only · 仅供教育用途
 
 The course recordings are included solely for MUSC 1100 study. Copyright remains with the original rights holders. The site provides listen-only playback; please do not download, redistribute, or use the recordings for any other purpose. Rights holders who want them removed can open an issue.

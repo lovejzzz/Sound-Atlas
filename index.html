@@ -249,9 +249,7 @@ svg.dia{width:100%;max-width:560px;height:auto;overflow:visible}
 .tg::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--rule);transition:background .2s}
 .tg[aria-pressed="true"]{border-color:var(--drop);color:var(--ink)}
 .tg[aria-pressed="true"]::before{background:var(--drop)}
-.tg.blind[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.tg.blind[aria-pressed="true"]::before{background:var(--hl)}
-#lsStart{margin-left:auto}
+#lsBlind{margin-left:auto}
 .ls-main{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);min-height:0}
 .ls-list{overflow:auto;border-right:1px solid var(--rule);padding:10px 10px 16px}
 .ls-sel{display:flex;justify-content:space-between;align-items:center;padding:4px 8px 8px;font-size:12px;color:var(--ink-3)}
@@ -317,6 +315,7 @@ mark.t{background:var(--hl);color:inherit;border-radius:3px;padding:0 2px}
 .ls-player{display:grid;grid-template-columns:minmax(0,1.1fr) auto minmax(0,1.6fr) 160px;gap:18px;align-items:center;padding:12px 20px;border-top:1px solid var(--rule);background:var(--paper-2)}
 .ls-now{display:flex;gap:12px;align-items:center;min-width:0}
 .ls-nt{min-width:0}
+.ls-nt .eyebrow{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ls-nt b{display:block;font-family:var(--f-latin);font-weight:400;font-size:22px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .eq{display:inline-flex;align-items:flex-end;gap:2px;width:18px;height:18px;flex:none}
 .eq i{flex:1;background:var(--drop);height:30%;border-radius:1px}
@@ -409,7 +408,7 @@ mark.t{background:var(--hl);color:inherit;border-radius:3px;padding:0 2px}
   .ls-seek{grid-column:1/-1;order:3}
   .ls-state{display:none}
   .info div{grid-template-columns:1fr;gap:4px}
-  #lsStart{margin-left:0}
+  #lsBlind{margin-left:0}
   .st-body{padding:18px 16px 24px}
   .qhead{position:relative}
   .hintwrap{position:static}
@@ -458,9 +457,8 @@ mark.t{background:var(--hl);color:inherit;border-radius:3px;padding:0 2px}
         <button type="button" class="tg" id="lsShuffle" aria-pressed="false">随机顺序</button>
         <button type="button" class="tg" id="lsRandStart" aria-pressed="false">随机起点</button>
         <button type="button" class="tg" id="lsRepeat" aria-pressed="false">循环</button>
-        <button type="button" class="tg blind" id="lsBlind" aria-pressed="false">盲听测验</button>
       </div>
-      <button type="button" class="nav primary" id="lsStart">▶ 开始练习</button>
+      <button type="button" class="nav primary" id="lsBlind">盲听测验</button>
     </div>
     <div class="ls-main">
       <div class="ls-list" id="lsList"></div>
@@ -962,7 +960,7 @@ function lsList(){
   $('lsList').querySelectorAll('.trk').forEach(r=>{
     const i=+r.dataset.i, cb=r.querySelector('input');
     cb.onclick=e=>{e.stopPropagation(); cb.checked?LS.sel.add(LIB.tracks[i].id):LS.sel.delete(LIB.tracks[i].id); lsList();};
-    r.onclick=()=>{LS.queue=null; lsLoad(i,true);};
+    r.onclick=()=>{if(LS.blind) lsEndBlind(); lsStart(i);};
   });
   $('lsAll').onclick=()=>{LIB.tracks.forEach(t=>LS.sel.add(t.id));lsList();};
   $('lsNone').onclick=()=>{LS.sel.clear();lsList();};
@@ -1034,17 +1032,30 @@ let unlocked=false;
 function unlock(){ if(unlocked) return; unlocked=true; try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); ctx.resume(); }catch(e){} if(!la.src){ la.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='; la.play().then(()=>la.pause()).catch(()=>{}); } }
 document.getElementById('listen').addEventListener('pointerdown',unlock,true);
 document.getElementById('listen').addEventListener('contextmenu',e=>{ if(e.target.closest('.ls-player')) e.preventDefault(); });
+let lsLoadVersion=0, lsAdvanceTimer=null, lsNormalSettings=null;
+function lsCancelPending(){
+  ++lsLoadVersion;
+  clearTimeout(lsAdvanceTimer); lsAdvanceTimer=null;
+}
 function lsLoad(i, autoplay){
-  LS.i=i; LS.guessed=null; const t=tr();
+  lsCancelPending();
+  const version=lsLoadVersion;
+  la.pause(); LS.i=i; LS.guessed=null; LS.msg=''; const t=tr();
   LS.win = [0, LS.clip==='full'?t.meta.durationSeconds:Math.min(+LS.clip,t.meta.durationSeconds)];
-  const go=()=>{ LS.win=lsWindow(); la.currentTime=LS.win[0]; lsSeekUI(); if(autoplay){ sa.pause(); la.play().catch(()=>{ LS.msg='点 ▶ 开始播放'; lsState(); }); } };
+  const go=()=>{
+    if(version!==lsLoadVersion) return;
+    LS.win=lsWindow(); la.currentTime=LS.win[0]; lsSeekUI();
+    if(autoplay){ sa.pause(); la.play().catch(()=>{ if(version!==lsLoadVersion) return; LS.msg='点 ▶ 开始播放'; lsState(); }); }
+  };
   if(la.dataset.id!==t.id){
-    la.pause(); la.dataset.id=t.id; LS.msg='正在加载录音…'; lsState();
-    audioURL(t).then(u=>{ if(la.dataset.id!==t.id) return; LS.msg=''; la.src=u; la.addEventListener('loadedmetadata',go,{once:true}); la.load(); lsState(); })
-      .catch(()=>{ LS.msg='录音加载失败，请刷新页面重试'; lsState(); });
+    LS.msg='正在加载录音…'; lsState();
+    audioURL(t).then(u=>{
+      if(version!==lsLoadVersion) return;
+      LS.msg=''; la.dataset.id=t.id; la.src=u; la.addEventListener('loadedmetadata',go,{once:true}); la.load(); lsState();
+    }).catch(()=>{ if(version!==lsLoadVersion) return; LS.msg='录音加载失败，请重试播放'; lsState(); });
   } else if(la.readyState>=1) go(); else la.addEventListener('loadedmetadata',go,{once:true});
   if(LS.queue && LS.queue[LS.qpos+1]!=null) audioURL(LIB.tracks[LS.queue[LS.qpos+1]]).catch(()=>{});
-  lsList(); lsStudy(); lsNow(); lsSeekUI();
+  lsList(); lsStudy(); lsNow(); lsSeekUI(); lsState();
   const cur=$('lsList').querySelector('.trk.cur'); if(cur) cur.scrollIntoView({block:'nearest'});
 }
 function lsSeekUI(){
@@ -1053,7 +1064,7 @@ function lsSeekUI(){
   $('lsEl').textContent=fmt((la.currentTime||a)-a); $('lsDur').textContent=fmt(b-a);
 }
 function lsState(){
-  const st = (la.paused && LS.msg) ? LS.msg : LS.queue ? `练习中 · 第 ${LS.qpos+1} / ${LS.queue.length} 段` : '';
+  const st = (la.paused && LS.msg) ? LS.msg : LS.queue ? `${LS.blind?'测验中':'连续播放'} · 第 ${LS.qpos+1} / ${LS.queue.length} 段` : '';
   $('lsState').textContent=st;
   $('lsPlayer').classList.toggle('playing',!la.paused);
   $('lsPlayIc').innerHTML = la.paused?'<path d="M6 4l11 6-11 6z" fill="currentColor"/>':'<path d="M5 4h3.5v12H5zM11.5 4H15v12h-3.5z" fill="currentColor"/>';
@@ -1063,12 +1074,29 @@ la.addEventListener('play',()=>{sa.pause();LS.msg='';lsState();}); la.addEventLi
 la.addEventListener('timeupdate',()=>{ lsSeekUI(); if(la.currentTime>=LS.win[1]-0.05 && !la.paused){ la.pause(); lsAdvance(); } });
 la.addEventListener('ended',()=>lsAdvance());
 function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function lsStart(){
+function lsStart(startIndex=null){
   let ids=LIB.tracks.map((t,i)=>i).filter(i=>LS.sel.has(LIB.tracks[i].id));
+  if(startIndex!==null && !ids.includes(startIndex)) ids=[startIndex];
   if(!ids.length){ LS.msg='先勾选至少一首'; lsState(); return; }
   if(LS.shuffle) shuffleArr(ids);
-  LS.queue=ids; LS.qpos=0; if(LS.blind){LS.bOk=0;LS.bN=0;}
+  if(startIndex!==null){ const pos=ids.indexOf(startIndex); ids=ids.slice(pos).concat(ids.slice(0,pos)); }
+  LS.queue=ids; LS.qpos=0;
   lsLoad(ids[0],true);
+}
+function lsEndBlind(message=''){
+  lsCancelPending(); la.pause(); sa.pause();
+  LS.blind=false; LS.queue=null; LS.guessed=null; LS.msg=message;
+  if(lsNormalSettings){
+    LS.shuffle=lsNormalSettings.shuffle; LS.rand=lsNormalSettings.rand; lsNormalSettings=null;
+    $('lsShuffle').setAttribute('aria-pressed',LS.shuffle);
+    $('lsRandStart').setAttribute('aria-pressed',LS.rand);
+  }
+  $('lsBlind').textContent='盲听测验';
+  lsList(); lsStudy(); lsNow(); lsState();
+}
+function lsFinish(){
+  if(LS.blind){ lsEndBlind(`测验完成 · 答对 ${LS.bOk} / ${LS.bN}`); return; }
+  lsCancelPending(); la.pause(); LS.queue=null; LS.msg='播放完成'; lsState();
 }
 function lsAdvance(){
   if(!LS.queue){ la.currentTime=LS.win[0]; lsSeekUI(); lsState(); return; }
@@ -1076,22 +1104,42 @@ function lsAdvance(){
   LS.qpos++;
   if(LS.qpos>=LS.queue.length){
     if(LS.repeat){ if(LS.shuffle) shuffleArr(LS.queue); LS.qpos=0; }
-    else { LS.queue=null; LS.msg = LS.blind?`练习完成 · 盲听 ${LS.bOk} / ${LS.bN}`:'练习完成'; lsState(); return; }
+    else { lsFinish(); return; }
   }
-  setTimeout(()=>lsLoad(LS.queue[LS.qpos],true),600);
+  lsAdvanceTimer=setTimeout(()=>{lsAdvanceTimer=null;lsLoad(LS.queue[LS.qpos],true);},600);
 }
-$('lsPlay').onclick=()=>{ if(la.paused){ if(la.currentTime>=LS.win[1]-0.1||la.currentTime<LS.win[0]) la.currentTime=LS.win[0]; la.play().catch(()=>{}); } else la.pause(); };
+$('lsPlay').onclick=()=>{
+  if(!la.paused){ la.pause(); return; }
+  if(!LS.queue){ lsStart(LS.sel.has(tr().id)?LS.i:null); return; }
+  if(lsAdvanceTimer || la.dataset.id!==tr().id || la.readyState<1){ lsLoad(LS.queue[LS.qpos],true); return; }
+  if(la.currentTime>=LS.win[1]-0.1||la.currentTime<LS.win[0]) la.currentTime=LS.win[0];
+  la.play().catch(()=>{});
+};
 $('lsNext').onclick=()=>{ if(LS.queue){ if(LS.blind&&LS.guessed===null){LS.bN++;LS.guessed=-1;} LS.qpos=Math.min(LS.qpos,LS.queue.length-1); la.pause(); lsAdvanceForce(); } else lsLoad((LS.i+1)%LIB.tracks.length,!la.paused); };
-function lsAdvanceForce(){ if(LS.guessed===-1) LS.guessed=null; LS.qpos++; if(LS.qpos>=LS.queue.length){ if(LS.repeat) LS.qpos=0; else { LS.queue=null; LS.msg='练习完成'; lsState(); return; } } lsLoad(LS.queue[LS.qpos],true); }
+function lsAdvanceForce(){
+  lsCancelPending();
+  if(LS.guessed===-1) LS.guessed=null;
+  LS.qpos++;
+  if(LS.qpos>=LS.queue.length){ if(LS.repeat){ if(LS.shuffle) shuffleArr(LS.queue); LS.qpos=0; } else { lsFinish(); return; } }
+  lsLoad(LS.queue[LS.qpos],true);
+}
 $('lsPrev').onclick=()=>{ if(la.currentTime-LS.win[0]>3){ la.currentTime=LS.win[0]; return; } if(LS.queue){ LS.qpos=Math.max(0,LS.qpos-1); lsLoad(LS.queue[LS.qpos],true);} else lsLoad((LS.i-1+LIB.tracks.length)%LIB.tracks.length,!la.paused); };
 $('lsSeek').oninput=e=>{ la.currentTime=LS.win[0]+(+e.target.value); };
-$('lsStart').onclick=lsStart;
+$('lsBlind').onclick=()=>{
+  if(LS.blind){ lsEndBlind(); return; }
+  if(!LS.sel.size){ LS.msg='先勾选至少一首'; lsState(); return; }
+  lsNormalSettings={shuffle:LS.shuffle,rand:LS.rand};
+  LS.blind=true; LS.guessed=null; LS.bOk=0; LS.bN=0; LS.tab='guide';
+  LS.shuffle=true; LS.rand=true;
+  $('lsShuffle').setAttribute('aria-pressed',true); $('lsRandStart').setAttribute('aria-pressed',true);
+  $('lsBlind').textContent='结束测验';
+  lsStart();
+};
 $('lsClip').querySelectorAll('button').forEach(b=>b.onclick=()=>{ LS.clip=b.dataset.v; $('lsClip').querySelectorAll('button').forEach(x=>x.setAttribute('aria-checked',x===b)); LS.win=lsWindow(); if(la.currentTime<LS.win[0]||la.currentTime>LS.win[1]) la.currentTime=LS.win[0]; lsSeekUI(); });
 const tgl=(id,key,after)=>{const b=$(id);b.onclick=()=>{LS[key]=!LS[key];b.setAttribute('aria-pressed',LS[key]);after&&after();};};
 tgl('lsShuffle','shuffle'); tgl('lsRepeat','repeat'); tgl('lsRandStart','rand');
-tgl('lsBlind','blind',()=>{ LS.guessed=null; if(LS.blind){ LS.bOk=0; LS.bN=0; if(!LS.shuffle){LS.shuffle=true;$('lsShuffle').setAttribute('aria-pressed',true);} if(!LS.rand){LS.rand=true;$('lsRandStart').setAttribute('aria-pressed',true);} } lsStudy(); lsNow(); });
 addEventListener('keydown',e=>{ if($('listen').hidden||!V.el.hidden) return; if(e.code==='Space' && !/INPUT|TEXTAREA|BUTTON|SELECT/.test(document.activeElement.tagName)){ e.preventDefault(); $('lsPlay').click(); } });
-function lsOpenPlace(k){ const i=LIB.tracks.findIndex(t=>t.place===k); if(i<0) return; close(); setView('listen'); LS.queue=null; if(LS.blind){LS.blind=false;$('lsBlind').setAttribute('aria-pressed',false);} lsLoad(i,true); }
+function lsOpenPlace(k){ const i=LIB.tracks.findIndex(t=>t.place===k); if(i<0) return; close(); setView('listen'); if(LS.blind) lsEndBlind(); lsStart(i); }
 let lsInit=false;
 function lsBoot(){ if(lsInit) return; lsInit=true; lsLoad(0,false); lsState(); }
 
