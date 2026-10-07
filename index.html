@@ -254,8 +254,6 @@ svg.dia{width:100%;max-width:560px;height:auto;overflow:visible}
 #lsStart{margin-left:auto}
 .ls-main{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);min-height:0}
 .ls-list{overflow:auto;border-right:1px solid var(--rule);padding:10px 10px 16px}
-.ls-legal{margin:18px 8px 4px;padding:12px 14px;border-radius:12px;background:var(--paper-2);font-size:12px;line-height:1.7;color:var(--ink-3)}
-.ls-legal b{display:block;font-family:var(--f-mono);font-weight:500;font-size:11px;letter-spacing:.12em;color:var(--ink-2);margin-bottom:2px}
 .ls-sel{display:flex;justify-content:space-between;align-items:center;padding:4px 8px 8px;font-size:12px;color:var(--ink-3)}
 .ls-sel button{border:0;background:none;color:var(--drop);cursor:pointer;font-size:12px;padding:0}
 .ls-grp{font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--ink-2);padding:12px 8px 4px;letter-spacing:.06em;display:flex;align-items:center;gap:6px}
@@ -316,7 +314,7 @@ mark.t{background:var(--hl);color:inherit;border-radius:3px;padding:0 2px}
 .icp details a{color:var(--ink-2)}
 .notes textarea{width:100%;box-sizing:border-box;min-height:220px;border:1px solid var(--rule);border-radius:14px;padding:14px;font:inherit;font-size:15px;line-height:1.7;background:var(--paper);color:var(--ink);resize:vertical}
 .notes small{color:var(--ink-3)}
-.ls-player{display:grid;grid-template-columns:minmax(0,1.1fr) auto minmax(0,1.6fr) auto;gap:18px;align-items:center;padding:12px 20px;border-top:1px solid var(--rule);background:var(--paper-2)}
+.ls-player{display:grid;grid-template-columns:minmax(0,1.1fr) auto minmax(0,1.6fr) 160px;gap:18px;align-items:center;padding:12px 20px;border-top:1px solid var(--rule);background:var(--paper-2)}
 .ls-now{display:flex;gap:12px;align-items:center;min-width:0}
 .ls-nt{min-width:0}
 .ls-nt b{display:block;font-family:var(--f-latin);font-weight:400;font-size:22px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -332,7 +330,7 @@ mark.t{background:var(--hl);color:inherit;border-radius:3px;padding:0 2px}
 .playbtn svg{width:17px;height:17px}
 .ls-seek{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-family:var(--f-mono);font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .ls-seek input{width:100%;accent-color:var(--drop)}
-.ls-state{font-size:12px;color:var(--ink-3);white-space:nowrap}
+.ls-state{font-size:12px;line-height:1.5;color:var(--ink-3);overflow-wrap:anywhere}
 /* view switch */
 .seg-ctl{display:inline-flex;background:var(--paper);border:1px solid var(--rule);border-radius:999px;padding:3px}
 .seg-ctl button{border:0;background:none;padding:6px 14px;border-radius:999px;cursor:pointer;font-size:14px;color:var(--ink-2)}
@@ -960,7 +958,6 @@ function lsList(){
     if(t.place!==prev){prev=t.place;h+=`<div class="ls-grp"><svg viewBox="0 0 30 40" aria-hidden="true"><path d="M15 39C15 39 2 23.5 2 14.5a13 13 0 0 1 26 0C28 23.5 15 39 15 39z" fill="var(--drop)"/></svg>${PNAME[t.place]}</div>`;}
     h+=`<div class="trk${i===LS.i&&!hidden()?' cur':''}" data-i="${i}"><input type="checkbox" aria-label="练习时包含 ${t.title}" ${LS.sel.has(t.id)?'checked':''}><span class="tt">${t.title}<small>${t.location}</small></span><span class="td">${fmt(t.meta.durationSeconds)}</span></div>`;
   });
-  h+=`<p class="ls-legal"><b>仅供教育用途</b>这些录音来自课程教材 <i>World Music: A Global Journey</i>，只用于 MUSC 1100 的课程学习。版权归原权利人所有。本站只提供在线试听，请勿下载、转载或用于其他用途。</p>`;
   $('lsList').innerHTML=h;
   $('lsList').querySelectorAll('.trk').forEach(r=>{
     const i=+r.dataset.i, cb=r.querySelector('input');
@@ -1056,7 +1053,7 @@ function lsSeekUI(){
   $('lsEl').textContent=fmt((la.currentTime||a)-a); $('lsDur').textContent=fmt(b-a);
 }
 function lsState(){
-  const st = (la.paused && LS.msg) ? LS.msg : LS.queue ? `练习中 · 第 ${LS.qpos+1} / ${LS.queue.length} 段` : (la.paused?'已暂停':'正在播放');
+  const st = (la.paused && LS.msg) ? LS.msg : LS.queue ? `练习中 · 第 ${LS.qpos+1} / ${LS.queue.length} 段` : '';
   $('lsState').textContent=st;
   $('lsPlayer').classList.toggle('playing',!la.paused);
   $('lsPlayIc').innerHTML = la.paused?'<path d="M6 4l11 6-11 6z" fill="currentColor"/>':'<path d="M5 4h3.5v12H5zM11.5 4H15v12h-3.5z" fill="currentColor"/>';
